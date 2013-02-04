@@ -1,18 +1,19 @@
 #!/usr/bin/perl
-($multiplier) = $ARGV[0] =~ m/(\d+)/;
+
 if ($ARGV[0] =~ m/(\d+)/) {
 	$multiplier = $1;
 } else {
 	print "Error input pararmeter\nUsage: dimen_multiply.pl MULTIPLIER SOURCE_FILE > TARGET_FILE\n";
 	exit 0;
 }
-open(MYINPUTFILE, $ARGV[1]);
-while(<MYINPUTFILE>) {
+
+open(INPUT_FILE, $ARGV[1]);
+while(<INPUT_FILE>) {
 	chomp;
-	$line = $_;
-	if (($indent, $head, $sign, $dimen, $unit, $tail) = $line =~ m/(\s*)(<dimen name="\S+">)([\+-]*)(\d+)(\S+)(<\/dimen>)/) {
+	my $line = $_;
+	if (($head, $sign, $dimen, $unit, $tail) = $line =~ m/(\s*<dimen name="\S+">)([\+-]*)(\d+)(\S+)(<\/dimen>)/) {
 		$new_dimen = ($unit eq 'px') ? int($dimen / $multiplier) : $dimen;
-		print "$indent$head$sign$new_dimen$unit$tail\n";
+		print "$head$sign$new_dimen$unit$tail\n";
 	} else {
 		print "$line\n";
 	}
