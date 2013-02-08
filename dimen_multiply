@@ -1,29 +1,22 @@
 #!/usr/bin/perl
 use Getopt::Long;
+use POSIX;
 
-my $use_floor = 0;
-my $src_file;
-my $dst_file;
-my $src_res;
-my $dst_res;
-my $tran_expr;
+sub round {
+	return int($_[0] + 0.5);
+}
+
+my $op;
 
 GetOptions(
-		'floor!' => \$use_floor,
-		'r=s' => \$tran_expr,
-		'src=s' => \$src_file,
-		'dst=s' => \$dst_file,
+		'op=s' => \$op
 );
 
-parse_resolution($tran_expr);
+$op = lc $op;
+$op = "ceil" if $op eq "ceiling";
 
-sub parse_resolution {
-	$param = lc $_[0];
-	print $param;
-	$pattern = "fullhd|hd|qhd|wvga|wvga_l|hvga";
-	my ($src_res, $dst_res) = $param =~ m/(fullhd|hd|qhd|wvga|wvga_l|hvga)_to_(fullhd|hd|qhd|wvga|wvga_l|hvga)/;
-#print $src_res." to ".$dst_res;
-}
+$round1 = &{$op}(3.4);
+$round2 = &{$op}(3.6);
 
 my %res_multiplier = (
 		FULLHD => 2.0,
@@ -34,20 +27,10 @@ my %res_multiplier = (
 		HVGA => 0.66,
 );
 
-print "$rule\n";
-print "$src[0]  $src[1]\n";
-print "@dst\n";
-print "$all";
-
 my $argc = $#ARGV + 1;
-if ($argc != 4 || $argc != 6) {
-	print "Invalid input\nUsage: dimen_multiply -r [floor|ceiling] -src/[xxhdpi|xhdpi|hdpi|wvga] SRC_FILE -dst/[xxhdpi|xhdpi|hdpi|wvga] DST_FILE\n";
+if ($argc != 4) {
+	print "Invalid input\nUsage: dimen_multiply -op [floor|ceiling|round] [xxhdpi|xhdpi|hdpi|wvga|wvga_l|hvga] SRC_FILE [xxhdpi|xhdpi|hdpi|wvga|wvga_l|hvga] DST_FILE\n";
 	exit 0;
-}
-
-my $use_floor = 0;
-
-if ($argc != 4 || $ar) {
 }
 
 my $src_file = $ARGV[1];
@@ -59,7 +42,8 @@ my $src_multiplier = $res_multiplier{uc $ARGV[0]};
 
 my $dst_file = $ARGV[3];
 while (-e $dst_file) {
-	$dst_file = $dst_file."_new";
+	($name, $group2, $count, $ext) = $dst_file =~ /(.+?)(_\((\d+)\)){0,1}(\.xml)/;
+	$dst_file = $name."_(".++$count. ").xml";
 }
 my $dst_multiplier = $res_multiplier{uc $ARGV[2]};
 
@@ -67,25 +51,17 @@ my $multiplier = $src_multiplier / $dst_multiplier;
 
 print "$multiplier\n";
 
-=star commenct
-if ($ARGV[0] =~ m/(\d+)/) {
-	$multiplier = $1;
-} else {
-	print "Error input pararmeter\nUsage: dimen_multiply.pl MULTIPLIER SOURCE_FILE > TARGET_FILE\n";
-	exit 0;
-}
-
-open(INPUT_FILE, $ARGV[1]);
+open(INPUT_FILE, $src_file);
+open(OUTPUT_FILE, ">$dst_file");
 while(<INPUT_FILE>) {
 	chomp;
 	my $line = $_;
 	if (($head, $sign, $dimen, $unit, $tail) = $line =~ m/(\s*<dimen name="\S+">)([\+-]*)(\d+)(\S+)(<\/dimen>)/) {
-		$new_dimen = ($unit eq 'px') ? int($dimen / $multiplier) : $dimen;
-		print "$head$sign$new_dimen$unit$tail\n";
+		$new_dimen = ($unit eq 'px') ? &{$op}($dimen / $multiplier) : $dimen;
+		print OUTPUT_FILE "$head$sign$new_dimen$unit$tail\n";
 	} else {
-		print "$line\n";
+		print OUTPUT_FILE "$line\n";
 	}
 }
-=end comment
-=cut
-
+close(INPUT_FILE);
+close(OUTPUT_FILE);
