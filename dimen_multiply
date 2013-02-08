@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-if ($ARGV[0] =~ m/(\d+)/) {
+if ($ARGV[0] =~ m/(\d+(.\d+)*)/) {
+	print "multiplier: ".$1;
 	$multiplier = $1;
 } else {
 	print "Error input pararmeter\nUsage: dimen_multiply.pl MULTIPLIER SOURCE_FILE > TARGET_FILE\n";
